@@ -16,54 +16,60 @@
             background-color: #f3f4f6;
             color: #333;
         }
-        /* Styles for the flyer display on this page */
+        /* Styles for the flyer display on this page to match 8.5x11 inches for print */
         .flyer-display {
-            width: 816px; /* 8.5 inches * 96 DPI for consistent print size */
-            height: 1056px; /* 11 inches * 96 DPI for consistent print size */
+            width: 816px; /* 8.5 inches * 96 DPI */
+            height: 1056px; /* 11 inches * 96 DPI */
             margin: 0 auto;
             background-color: white;
-            padding: 20px;
+            padding: 20px; /* Base internal padding for the flyer content */
             border: 2px solid #000;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             box-sizing: border-box; /* Include padding and border in total dimensions */
-            overflow: hidden; /* Prevent content from spilling */
+            display: flex; /* Use flexbox for vertical distribution */
+            flex-direction: column;
+            justify-content: space-between; /* Distribute space between items */
+            text-align: center; /* Center text globally in the flyer */
         }
         /* Styles from lost_pet_flyer.html, adapted for Tailwind context if possible, or kept direct */
         .red-banner {
             background-color: #ef4444; /* Tailwind red-500 */
             color: white;
             width: 100%;
-            padding: 10px 0;
-            margin: 0;
+            padding: 15px 0; /* Consistent padding for banner text */
+            margin: 0; /* Ensures no extra space at top/bottom from margin */
         }
         .missing {
-            font-size: 3rem; /* 48px */
+            font-size: 3.5rem; /* Increased font size */
             font-weight: bold;
-            text-align: center; /* Center the text */
-            letter-spacing: 0.2em; /* Increase letter spacing */
+            text-align: center;
+            letter-spacing: 0.25em; /* Slightly increased letter spacing */
+            margin-top: 5px; /* Minimal margin from top of template's padding */
+            margin-bottom: 5px; /* Minimal margin */
         }
         h2 {
-            font-size: 1.5rem; /* 24px */
-            margin: 10px 0;
+            font-size: 2rem; /* Increased font size */
+            margin: 5px 0; /* Further reduced margin */
             color: #3b82f6; /* Tailwind blue-500 */
         }
         .pet-name-display {
-            font-size: 2.25rem; /* 36px */
+            font-size: 3rem; /* Increased font size */
             font-weight: bold;
-            margin: 20px 0;
+            margin: 5px 0; /* Further reduced margin */
             color: #3b82f6; /* Tailwind blue-500 */
         }
         .photo-placeholder-display {
-            width: 300px;
-            height: 300px;
+            width: 100%; /* Stretches to full width within padding */
+            height: 500px; /* Increased height significantly */
             background-color: #d1d5db; /* Tailwind gray-300 */
-            margin: 20px auto;
+            margin: 5px auto; /* Reduced margin, auto for centering */
             display: flex;
             align-items: center;
             justify-content: center;
             border: 1px solid #000;
             font-style: italic;
             overflow: hidden; /* Ensure image fits */
+            flex-shrink: 0; /* Prevent shrinking if content is too large */
         }
         .photo-placeholder-display img {
             width: 100%;
@@ -71,20 +77,32 @@
             object-fit: cover; /* Cover the area, cropping if necessary */
         }
         .details-display {
-            font-size: 1.125rem; /* 18px */
-            margin: 20px 0;
+            font-size: 1.5rem; /* Increased font size */
+            margin: 5px 0; /* Reduced margin */
+        }
+        .details-display p {
+            margin-bottom: 3px; /* Reduced space between detail lines */
         }
         .reward-display {
-            font-size: 1.5rem; /* 24px */
+            font-size: 2rem; /* Increased font size for amount */
             font-weight: bold;
             color: #10b981; /* Tailwind green-500 */
-            margin: 20px 0;
+            margin: 5px 0; /* Reduced margin */
             display: none; /* Hidden by default, shown via JS if needed */
+            flex-direction: row; /* Make "REWARD" and amount appear on the same line */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            gap: 10px; /* Space between "REWARD" and amount */
+        }
+        .reward-display div:first-child {
+            font-size: 1.5rem; /* "REWARD" text slightly smaller than amount */
+            margin-bottom: 0; /* Remove margin as it's now inline */
         }
         .contact-display {
-            font-size: 1.125rem; /* 18px */
-            padding: 10px 0;
-            text-align: center; /* Center the text */
+            font-size: 1.5rem; /* Increased font size */
+            padding: 15px 0; /* Consistent padding */
+            text-align: center;
+            margin: 0; /* Ensures no extra space at top/bottom from margin, flex will handle spacing */
         }
     </style>
 </head>
@@ -107,8 +125,8 @@
                 <p><span id="displayPetName2"></span> has been missing since <span id="displayMissingDate"></span> at <span id="displayLastSeenLocation"></span></p>
             </div>
             <div class="reward-display" id="displayRewardSection">
-                <div id="displayRewardAmount"></div>
                 <div>REWARD</div>
+                <div id="displayRewardAmount"></div>
             </div>
             <div class="red-banner contact-display">CALL OR TEXT WITH ANY INFORMATION <span id="displayPhoneNumber"></span></div>
         </div>
@@ -175,7 +193,7 @@
                 const reward = parseFloat(flyerInputData.rewardAmount);
                 if (!isNaN(reward) && reward > 0) {
                     displayRewardAmount.textContent = `$${reward.toFixed(2)}`;
-                    displayRewardSection.style.display = 'block';
+                    displayRewardSection.style.display = 'flex'; // Use flex for inline display
                 } else {
                     displayRewardSection.style.display = 'none';
                 }
