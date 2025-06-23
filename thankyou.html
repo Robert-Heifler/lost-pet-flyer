@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Flyer is Ready!</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- html2canvas and jsPDF for client-side generation, now used on this page -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: #f3f4f6;
+            color: #333;
+        }
+        /* Styles for the flyer display on this page to match 8.5x11 inches for print */
+        .flyer-display {
+            width: 816px; /* 8.5 inches * 96 DPI */
+            height: 1056px; /* 11 inches * 96 DPI */
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px; /* Base internal padding for the flyer content */
+            border: 2px solid #000;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-sizing: border-box; /* Include padding and border in total dimensions */
+            display: flex; /* Use flexbox for vertical distribution */
+            flex-direction: column;
+            justify-content: space-between; /* Distribute space between items */
+            text-align: center; /* Center text globally in the flyer */
+        }
+        /* Styles from lost_pet_flyer.html, adapted for Tailwind context if possible, or kept direct */
+        .red-banner {
+            background-color: #ef4444; /* Tailwind red-500 */
+            color: white;
+            width: 100%;
+            padding: 15px 0; /* Consistent padding for banner text */
+            margin: 0; /* Ensures no extra space at top/bottom from margin */
+        }
+        .missing {
+            font-size: 3.5rem; /* Increased font size */
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 0.25em; /* Slightly increased letter spacing */
+            /* Adjusted padding to center text vertically within the banner */
+            padding-top: 10px; /* More top padding */
+            padding-bottom: 10px; /* More bottom padding */
+            line-height: 1; /* Ensure text sits well within the padding */
+        }
+        h2 {
+            font-size: 2rem; /* Increased font size */
+            margin: 5px 0; /* Further reduced margin */
+            color: #3b82f6; /* Tailwind blue-500 */
+        }
+        .pet-name-display {
+            font-size: 3rem; /* Increased font size */
+            font-weight: bold;
+            margin: 5px 0; /* Further reduced margin */
+            color: #3b82f6; /* Tailwind blue-500 */
+        }
+        .photo-placeholder-display {
+            width: 100%; /* Stretches to full width within padding */
+            height: 500px; /* Increased height significantly */
+            background-color: #d1d5db; /* Tailwind gray-300 */
+            margin: 5px auto; /* Reduced margin, auto for centering */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #000;
+            font-style: italic;
+            overflow: hidden; /* Ensure image fits */
+            flex-shrink: 0; /* Prevent shrinking if content is too large */
+        }
+        .photo-placeholder-display img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Cover the area, cropping if necessary */
+        }
+        .details-display {
+            font-size: 1.5rem; /* Increased font size */
+            margin: 5px 0; /* Reduced margin */
+        }
+        .details-display p {
+            margin-bottom: 3px; /* Reduced space between detail lines */
+        }
+        .reward-display {
+            font-size: 2rem; /* Increased font size for amount */
+            font-weight: bold;
+            color: #10b981; /* Tailwind green-500 */
+            margin: 5px 0; /* Reduced margin */
+            display: none; /* Hidden by default, shown via JS if needed */
+            flex-direction: row; /* Make "REWARD" and amount appear on the same line */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            gap: 10px; /* Space between "REWARD" and amount */
+        }
+        .reward-display div:first-child {
+            font-size: 1.5rem; /* "REWARD" text slightly smaller than amount */
+            margin-bottom: 0; /* Remove margin as it's now inline */
+        }
+        .contact-display {
+            font-size: 1.5rem; /* Increased font size */
+            padding: 15px 0; /* Consistent padding */
+            text-align: center;
+            margin: 0; /* Ensures no extra space at top/bottom from margin, flex will handle spacing */
+        }
+    </style>
+</head>
+<body>
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-xl text-center">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Thank You for Your Payment!</h1>
+        <p class="text-lg text-gray-700 mb-8">Your lost pet flyer is ready for download.</p>
+
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Your Generated Flyer</h2>
+        <!-- This div will hold the reconstructed flyer for display -->
+        <div id="reconstructed-flyer-display" class="flyer-display mb-8">
+            <!-- Content will be populated by JavaScript -->
+            <div class="red-banner missing">MISSING</div>
+            <h2 class="text-blue-500">PLEASE HELP US FIND OUR FURRY FRIEND.</h2>
+            <div class="pet-name-display text-blue-500" id="displayPetName"></div>
+            <div class="photo-placeholder-display" id="displayPhotoPlaceholder"></div>
+            <div class="details-display">
+                <p>Breed: <span id="displayPetBreed"></span></p>
+                <p>Color: <span id="displayPetColor"></span></p>
+                <p><span id="displayPetName2"></span> has been missing since <span id="displayMissingDate"></span> at <span id="displayLastSeenLocation"></span></p>
+            </div>
+            <div class="reward-display" id="displayRewardSection">
+                <div>REWARD</div>
+                <div id="displayRewardAmount"></div>
+            </div>
+            <div class="red-banner contact-display">CALL OR TEXT WITH ANY INFORMATION <span id="displayPhoneNumber"></span></div>
+        </div>
+
+        <div class="space-y-4">
+            <button id="downloadPngBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                Download Flyer (PNG)
+            </button>
+            <button id="downloadPdfBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                Download Flyer (PDF)
+            </button>
+        </div>
+
+        <div id="error-message" class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded-md">
+            <!-- Error message will be displayed here -->
+        </div>
+    </div>
+
+    <script>
+        const downloadPngBtn = document.getElementById('downloadPngBtn');
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        const errorMessageDiv = document.getElementById('error-message');
+
+        const displayPetName = document.getElementById('displayPetName');
+        const displayPetName2 = document.getElementById('displayPetName2');
+        const displayPetBreed = document.getElementById('displayPetBreed');
+        const displayPetColor = document.getElementById('displayPetColor');
+        const displayMissingDate = document.getElementById('displayMissingDate');
+        const displayLastSeenLocation = document.getElementById('displayLastSeenLocation');
+        const displayPhoneNumber = document.getElementById('displayPhoneNumber');
+        const displayRewardSection = document.getElementById('displayRewardSection');
+        const displayRewardAmount = document.getElementById('displayRewardAmount');
+        const displayPhotoPlaceholder = document.getElementById('displayPhotoPlaceholder');
+        const reconstructedFlyerDisplay = document.getElementById('reconstructed-flyer-display'); // Get the display element
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const flyerInputData = JSON.parse(sessionStorage.getItem('flyerInputData'));
+
+            console.log('ThankYou page loaded.'); // Log page load
+            console.log('Retrieved flyerInputData:', flyerInputData); // Log retrieved input data
+
+            if (flyerInputData) {
+                // Populate the display flyer with stored input data
+                displayPetName.textContent = flyerInputData.petName || '';
+                displayPetName2.textContent = flyerInputData.petName || '';
+                displayPetBreed.textContent = flyerInputData.petBreed || '';
+                displayPetColor.textContent = flyerInputData.petColor || '';
+
+                if (flyerInputData.missingDate) {
+                    const dateObj = new Date(flyerInputData.missingDate + 'T00:00:00');
+                    displayMissingDate.textContent = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                } else {
+                    displayMissingDate.textContent = '';
+                }
+
+                displayLastSeenLocation.textContent = flyerInputData.lastSeenLocation || '';
+                displayPhoneNumber.textContent = flyerInputData.phoneNumber || '';
+
+                const reward = parseFloat(flyerInputData.rewardAmount);
+                if (!isNaN(reward) && reward > 0) {
+                    displayRewardAmount.textContent = `$${reward.toFixed(2)}`;
+                    displayRewardSection.style.display = 'flex'; // Use flex for inline display
+                } else {
+                    displayRewardSection.style.display = 'none';
+                }
+
+                if (flyerInputData.petPhotoBase64) {
+                    const img = document.createElement('img');
+                    img.src = flyerInputData.petPhotoBase64;
+                    displayPhotoPlaceholder.innerHTML = '';
+                    displayPhotoPlaceholder.appendChild(img);
+                } else {
+                    displayPhotoPlaceholder.innerHTML = 'No photo available';
+                }
+                console.log('Flyer display populated with data.'); // Confirm population
+
+                // Enable buttons as data is present for on-demand generation
+                downloadPngBtn.disabled = false;
+                downloadPngBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                downloadPdfBtn.disabled = false;
+                downloadPdfBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            } else {
+                errorMessageDiv.textContent = 'Flyer data not found. Please go back and create your flyer.';
+                errorMessageDiv.classList.remove('hidden');
+                console.warn('Flyer input data not found in sessionStorage, disabling download buttons.'); // Log missing data
+                downloadPngBtn.disabled = true;
+                downloadPngBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                downloadPdfBtn.disabled = true;
+                downloadPdfBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            // PNG Download Logic (on-demand generation)
+            downloadPngBtn.addEventListener('click', () => {
+                if (!flyerInputData) {
+                    console.error('Cannot generate PNG: Flyer input data is missing.');
+                    errorMessageDiv.textContent = 'Error: Flyer data missing for PNG generation.';
+                    errorMessageDiv.classList.remove('hidden');
+                    return;
+                }
+                html2canvas(reconstructedFlyerDisplay, {
+                    useCORS: true,
+                    scale: 2 // High resolution for download
+                }).then(canvas => {
+                    const a = document.createElement('a');
+                    a.href = canvas.toDataURL('image/png');
+                    a.download = 'lost_pet_flyer.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    console.log('PNG download initiated from on-demand generation.');
+                }).catch(error => {
+                    console.error('Error generating PNG flyer on download click:', error);
+                    errorMessageDiv.textContent = 'An error occurred while generating the PNG flyer.';
+                    errorMessageDiv.classList.remove('hidden');
+                });
+            });
+
+            // PDF Download Logic (on-demand generation)
+            downloadPdfBtn.addEventListener('click', () => {
+                if (!flyerInputData) {
+                    console.error('Cannot generate PDF: Flyer input data is missing.');
+                    errorMessageDiv.textContent = 'Error: Flyer data missing for PDF generation.';
+                    errorMessageDiv.classList.remove('hidden');
+                    return;
+                }
+                html2canvas(reconstructedFlyerDisplay, {
+                    useCORS: true,
+                    scale: 2 // High resolution for PDF
+                }).then(canvas => {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'pt', 'letter');
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+                    const imgAspectRatio = canvas.width / canvas.height;
+                    let imgToPdfWidth = pdfWidth;
+                    let imgToPdfHeight = pdfWidth / imgAspectRatio;
+
+                    if (imgToPdfHeight > pdfHeight) {
+                        imgToPdfHeight = pdfHeight;
+                        imgToPdfWidth = pdfHeight * imgAspectRatio;
+                    }
+
+                    const xOffset = (pdfWidth - imgToPdfWidth) / 2;
+                    const yOffset = (pdfHeight - imgToPdfHeight) / 2;
+
+                    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', xOffset, yOffset, imgToPdfWidth, imgToPdfHeight);
+
+                    const a = document.createElement('a');
+                    a.href = pdf.output('datauristring');
+                    a.download = 'lost_pet_flyer.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    console.log('PDF download initiated from on-demand generation.');
+                }).catch(error => {
+                    console.error('Error generating PDF flyer on download click:', error);
+                    errorMessageDiv.textContent = 'An error occurred while generating the PDF flyer.';
+                    errorMessageDiv.classList.remove('hidden');
+                });
+            });
+
+            // Clear session storage after initial page load and setup
+            // This ensures subsequent visits (if not via redirect) start fresh
+            sessionStorage.removeItem('generatedFlyerPNG'); // These keys are no longer used for storage
+            sessionStorage.removeItem('generatedFlyerPDF'); // These keys are no longer used for storage
+            // Keep flyerInputData in sessionStorage so user can download if they navigate back/forth
+            // sessionStorage.removeItem('flyerInputData'); // Only remove if user explicitly clears or after a short delay/confirm
+        });
+    </script>
+</body>
+</html>
